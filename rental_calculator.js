@@ -1,54 +1,55 @@
 const Customer = require("./customer");
 const Movie = require("./movie");
 const Rental = require("./rental");
-module.exports = function statement(customer, movies) {
-  let totalAmount = 0;
+
+function createMovie(rental, movies){
+  return new Movie({
+    id: rental.movieID,
+    title: movies[rental.movieID].title,
+    code: movies[rental.movieID].code
+  });
+}
+
+function calculateRenterPoints(rentals) {
   let RenterPoints = 0;
+  for (let rental of rentals) {
+    RenterPoints++;
+    if (rental.isEligibleForBonusRenterPoint()) RenterPoints++;
+  }
+  return RenterPoints;
+}
+
+function getTotalCost(rentals) {
+  let totalCost = 0;
+  for (let rental of rentals) {
+    console.log(rental);
+    let rentalCost = rental.getCost();
+    totalCost += rentalCost;
+  }
+  return totalCost;
+}
+
+module.exports = function statement(customer, movies) {
   let myCustomer = new Customer({name: customer.name});
   let result = `Rental Record for ${myCustomer.name}\n`;
 
-  for (let rental of customer.rentals) {
-    // console.log(rental);
-    let movie = new Movie({
-      id: rental.movieID,
-      title: movies[rental.movieID].title,
-      code: movies[rental.movieID].code
-    });
-    let cost = 0;
+  let rentals = customer.rentals.map(
+    rental =>
+    new Rental({
+        movie: createMovie(rental, movies),
+        days: rental.days
+    })
+  );
 
-    // determine amount for each movie
-    switch (movie.code) {
-      case "regular":
-        cost = 2;
-        if (rental.days > 2) {
-          cost += (rental.days - 2) * 1.5;
-        }
-        break;
-      case "new":
-        cost = rental.days * 3;
-        break;
-      case "children":
-        cost = 1.5;
-        if (rental.days > 3) {
-          cost += (rental.days - 3) * 1.5;
-        }
-        break;
-      default:
-        throw new Error("Invalid move type:" + movie.code);
-    }
-
-    //add frequent renter points
-    RenterPoints++;
-    // add bonus for a two day new release rental
-    if (movie.code === "new" && rental.days > 2) RenterPoints++;
-
+  for (let rental of rentals) {
+    let rentalCost = rental.getCost();
     //print figures for this rental
-    result += `\t${movie.title}\t${cost}\n`;
-    totalAmount += cost;
+    result += `\t${rental.movie.title}\t${rentalCost}\n`;
   }
+
   // add footer lines
-  result += `Amount owed is ${totalAmount}\n`;
-  result += `You earned ${RenterPoints} frequent renter points\n`;
+  result += `Amount owed is ${getTotalCost(rentals)}\n`;
+  result += `You earned ${calculateRenterPoints(rentals)} frequent renter points\n`;
 
   return result;
 };

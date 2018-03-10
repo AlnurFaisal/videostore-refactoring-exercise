@@ -8,7 +8,7 @@
       "name": "Debug App",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceRoot}/app.js",
+      "program": "${workspaceRoot}/rental_caldulator.test.js",
       "stopOnEntry": false,
       "args": [],
       "cwd": "${workspaceRoot}",
